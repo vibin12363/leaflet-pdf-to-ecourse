@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-paper text-ink font-body antialiased; }
+
+/* Signature element: the highlighter swipe */
+.hl {
+  background-image: linear-gradient(100deg, transparent 2%, #E8F566 4%, #E8F566 96%, transparent 98%);
+  background-size: 100% 62%;
+  background-position: 0 68%;
+  background-repeat: no-repeat;
+  padding: 0 0.15em;
+}
+
+/* Book-style table of contents with dotted leaders */
+.toc-row { @apply flex items-baseline gap-2 w-full text-left; }
+.toc-row .leader { @apply flex-1 border-b border-dotted border-graphite/50 translate-y-[-3px]; }
+
+.prose-lesson h2 { @apply font-display text-lg font-semibold mt-6 mb-2; }
+.prose-lesson p { @apply mb-3 leading-relaxed; }
+.prose-lesson ul { @apply list-disc pl-5 mb-3 space-y-1; }
+.prose-lesson ol { @apply list-decimal pl-5 mb-3 space-y-1; }
+.prose-lesson code { @apply font-mono text-sm bg-line/60 px-1 rounded; }
+.prose-lesson strong { @apply font-bold; }
+.prose-lesson pre { @apply bg-line/60 rounded p-3 text-sm overflow-x-auto mb-3; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

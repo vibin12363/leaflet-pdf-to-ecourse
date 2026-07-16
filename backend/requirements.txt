@@ -1,0 +1,8 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+motor==3.6.0
+pymupdf==1.25.1
+groq==0.13.1
+firebase-admin==6.6.0
+python-multipart==0.0.20
+python-dotenv==1.0.1
