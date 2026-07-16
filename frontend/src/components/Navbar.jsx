@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -6,6 +6,22 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const profileRef = useRef(null)
+
+  // close the profile dropdown on any outside click or Escape
+  useEffect(() => {
+    if (!profileOpen) return
+    const onClick = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false)
+    }
+    const onKey = (e) => { if (e.key === 'Escape') setProfileOpen(false) }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [profileOpen])
 
   return (
     <header className="border-b border-line bg-paper/90 backdrop-blur sticky top-0 z-20">
@@ -15,7 +31,7 @@ export default function Navbar() {
         </Link>
 
         {user && (
-          <div className="flex items-center gap-3 relative">
+          <div ref={profileRef} className="flex items-center gap-3 relative">
             {/* Clicking avatar/name reveals the signed-in email */}
             <button
               onClick={() => setProfileOpen((v) => !v)}
@@ -29,13 +45,10 @@ export default function Navbar() {
             </button>
 
             {profileOpen && (
-              <>
-                <div className="fixed inset-0 z-20" onClick={() => setProfileOpen(false)} />
-                <div className="absolute right-0 top-11 z-30 w-64 bg-white border border-line rounded-xl shadow-lg p-4">
-                  <p className="font-display font-semibold text-sm">{user.displayName}</p>
-                  <p className="font-mono text-xs text-graphite mt-1 break-all"> {user.email}</p>
-                </div>
-              </>
+              <div className="absolute right-0 top-11 z-30 w-64 bg-white border border-line rounded-xl shadow-lg p-4">
+                <p className="font-display font-semibold text-sm">{user.displayName}</p>
+                <p className="font-mono text-xs text-graphite mt-1 break-all">{user.email}</p>
+              </div>
             )}
 
             <button
