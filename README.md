@@ -28,16 +28,17 @@ Upload any PDF (book, research paper, study material, documentation) and Leaflet
 ### AI pipeline (the interesting part)
 
 1. **Extraction** — PyMuPDF pulls text page-by-page; pages are grouped into ~9k-character chunks with page-range metadata. Handles large multi-page PDFs without loading images.
-2. **Digest** — each chunk is condensed to a ≤150-word factual digest (very large PDFs are sampled evenly, capped at 24 chunks).
+2. **Digest** — each chunk is condensed to a ≤150-word factual digest, 4 chunks in parallel on `llama-3.1-8b-instant` (summarization doesn't need a 70B model — ~5x faster and preserves the primary model's token budget). Very large PDFs are sampled evenly, capped at 24 chunks.
 3. **Outline** — one JSON-mode call turns the combined digest into the full course skeleton: title, description, estimated time, objectives, prerequisites, difficulty, and chapters → topics → lessons with stable IDs.
-4. **Lazy lesson generation** — lesson *content* (explanation, key takeaways, important notes, real-world examples, summary) is generated the **first time a learner opens it**, then cached in MongoDB. This keeps upload fast, respects Groq's free-tier rate limits, and never spends tokens on lessons nobody opens. A deliberate scalability decision.
+4. **Lazy lesson generation + prefetch** — the first lesson is pre-generated so the learner's first click is instant; every other lesson's *content* (explanation, key takeaways, important notes, real-world examples, summary) is generated the **first time a learner opens it**, then cached in MongoDB. This keeps upload fast, respects Groq's free-tier rate limits, and never spends tokens on lessons nobody opens. A deliberate scalability decision.
 5. **Companion chat** — lightweight retrieval (keyword-scored chunk ranking) selects the 3 most relevant source excerpts per question; the course TOC plus the last 8 chat turns are included for context-aware conversation. All history persists.
 6. **Quizzes** — generated per chapter (3 MCQ, 2 true/false, 1 short answer) in JSON mode, cached, scored server-side with explanations. Short answers are matched leniently on key terms.
+7. **Non-blocking by design** — all LLM calls run via `asyncio.to_thread`, so the API stays fully responsive while a course generates in the background.
 
 ## Features checklist
 
-- Google OAuth + GitHub OAuth (Firebase) with per-user dashboard and history
-- PDF upload with validation (type, 25 MB limit, encrypted/scanned-PDF detection), background course generation with polled status
+- Google OAuth + GitHub OAuth (Firebase) with per-user dashboard, profile view, and sign-out confirmation
+- PDF upload with validation (type, 25 MB limit, encrypted/scanned-PDF detection), non-blocking background course generation with polled status, and retry/delete for failed generations
 - Full course structure: title, description, estimated time, objectives, prerequisites, difficulty, TOC (chapters → topics → lessons)
 - Each lesson: structured explanation, key takeaways, important notes, real-world examples, summary
 - Progress: mark complete, chapter/course completion %, resume point, time-spent tracking, learning streak — all persisted
@@ -46,6 +47,7 @@ Upload any PDF (book, research paper, study material, documentation) and Leaflet
 - Dashboard: courses, completion, time learning, streak, recent quiz scores
 - Search across chapters, topics, lessons and generated lesson content
 - Responsive UI (mobile TOC toggle, slide-over chat), keyboard-focus styles, reduced-motion respected
+- Resilient AI layer: friendly user-facing error messages, exponential backoff on per-minute rate limits, and automatic fallback to `llama-3.1-8b-instant` when the primary model's daily token quota is exhausted
 
 ## Local setup
 
@@ -85,6 +87,8 @@ npm run dev               # http://localhost:5173
 | POST | `/api/documents` | Upload PDF, start background course generation |
 | GET | `/api/courses` | List my courses with completion stats |
 | GET | `/api/courses/{id}` | Course outline + my progress |
+| DELETE | `/api/courses/{id}` | Delete a course and all attached data |
+| POST | `/api/courses/{id}/retry` | Re-run generation for a failed course |
 | GET | `/api/courses/{id}/lessons/{lid}` | Lesson content (lazy-generated, cached) |
 | POST | `/api/courses/{id}/lessons/{lid}/complete` | Mark complete + record time spent |
 | POST | `/api/courses/{id}/resume` | Save resume point |
