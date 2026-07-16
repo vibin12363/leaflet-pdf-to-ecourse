@@ -2,7 +2,7 @@
 
 Upload any PDF (book, research paper, study material, documentation) and Leaflet converts it into a structured, interactive learning course — with lessons, quizzes, persistent progress, and an AI learning companion grounded in your document.
 
-**Live demo:** `https://your-app.vercel.app` · **API:** `https://your-api.onrender.com/api/health`
+**Live demo:** `[https://your-app.vercel.app](https://leaflet-pdf-to-ecourse.vercel.app/)` · **API:** `[https://your-api.onrender.com/api/health](https://leaflet-api.onrender.com/api/health)`
 
 ## Architecture
 
